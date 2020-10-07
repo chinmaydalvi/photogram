@@ -66,5 +66,20 @@ self.addEventListener('fetch', function(event) {
   );
 });
 
-// a comment
+
+// Cache only policy
+// self.addEventListener('fetch', function(event) {
+//   if (!(event.request.url.indexOf('http') === 0)) return; // skip the request. if request is not made with http protocol
+//   event.respondWith(
+//       caches.match(event.request)
+//   );
+// });
+
+// Network only policy
+// self.addEventListener('fetch', function(event) {
+//   if (!(event.request.url.indexOf('http') === 0)) return; // skip the request. if request is not made with http protocol
+//   event.respondWith(
+//       fetch(event.request)
+//   );
+// });
 
