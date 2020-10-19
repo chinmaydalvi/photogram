@@ -20,6 +20,16 @@ function openCreatePostModal() {
 
     deferredPrompt = null;
   }
+
+  // To Unregister the service worker after clicking on Add (+) icon
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations()
+        .then((registrations)=>{
+          for(let idx = 0; idx < registrations.length; idx++){
+            registrations[idx].unregister();
+          }
+        })
+  }
 }
 
 function closeCreatePostModal() {
@@ -66,10 +76,38 @@ function createCard() {
   sharedMomentsArea.appendChild(cardWrapper);
 }
 
-fetch('https://httpbin.org/get')
+var networkDataReceived = false;
+var url = 'https://photogram-c5234.firebaseio.com/posts.json';
+// You cant send the post request when you are offline but if you mock the response in body then you can do that
+// fetch(url,
+//     {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": 'application/json',
+//         'Accept': 'application/json'
+//       },
+//       body: JSON.stringify({ message: 'Some message' })
+//     })
+fetch(url)
   .then(function(res) {
     return res.json();
   })
   .then(function(data) {
-    createCard();
+    console.log('From web', data);
+    if(!networkDataReceived){
+      createCard();
+    }
   });
+
+if(`caches` in window){
+  caches.match(url)
+      .then((response)=>{
+        if(response){
+          return response.json();
+        }
+      }).then((data)=>{
+    console.log('From cache', data);
+    networkDataReceived = true;
+    createCard();
+  })
+}
