@@ -1,10 +1,15 @@
-var CACHE_STATIC_NAME = 'static-v9';
+importScripts('./src/js/idb.js');
+importScripts('./src/js/utility.js');
+
+
+var CACHE_STATIC_NAME = 'static-v11';
 var CACHE_DYNAMIC_NAME = 'dynamic-v4';
 var STATIC_FILES = [
   '/',
   '/index.html',
   '/offline.html',
   '/src/js/app.js',
+  '/src/js/idb.js',
   '/src/js/feed.js',
   '/src/js/promise.js',
   '/src/js/fetch.js',
@@ -16,6 +21,7 @@ var STATIC_FILES = [
   'https://fonts.googleapis.com/icon?family=Material+Icons',
   'https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css'
 ]
+
 // You can call this function on any event in SW depending on use case
 function trimCache(cacheNames, maxItem){
   console.log('Deleting...')
@@ -98,16 +104,22 @@ self.addEventListener('fetch', function(event) {
   var url = 'https://photogram-c5234.firebaseio.com/posts.json';
   if(event.request.url.indexOf(url) > -1){
     event.respondWith(
-        caches.open(CACHE_DYNAMIC_NAME)
-            .then((cache)=>{
-              return fetch(event.request)
-                  .then((response)=>{
-                    // trimCache(CACHE_DYNAMIC_NAME, 3);
-                    cache.put(event.request, response.clone())
-                    return response;
-                  })
-            }).catch((err)=>{
-              console.log("Failed=", err);
+        fetch(event.request)
+            .then((response)=>{
+              var clonedRes = response.clone();
+              clearAllData(OBJECT_STORE_NAME).then(()=>{
+                return clonedRes.json();
+              }).then((data)=>{
+                for(var key in data){
+                  if(data.hasOwnProperty(key)){
+                    writeData(OBJECT_STORE_NAME, data[key])
+                        // .then(function(){
+                        //   deleteItemFromData(OBJECT_STORE_NAME, key);
+                        // })
+                  }
+                }
+              });
+              return response;
             })
     );
   }

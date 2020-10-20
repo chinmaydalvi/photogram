@@ -49,23 +49,23 @@ function onSaveButtonClicked(){
   })
 }
 
-function createCard() {
+function createCard(data) {
   var cardWrapper = document.createElement('div');
   cardWrapper.className = 'shared-moment-card mdl-card mdl-shadow--2dp';
   var cardTitle = document.createElement('div');
   cardTitle.className = 'mdl-card__title';
-  cardTitle.style.backgroundImage = 'url("/src/images/sf-boat.jpg")';
+  cardTitle.style.backgroundImage = 'url('+ data.image +')';
   cardTitle.style.backgroundSize = 'cover';
   cardTitle.style.height = '180px';
   cardWrapper.appendChild(cardTitle);
   var cardTitleTextElement = document.createElement('h2');
   cardTitleTextElement.style.color = "white";
   cardTitleTextElement.className = 'mdl-card__title-text';
-  cardTitleTextElement.textContent = 'San Francisco Trip';
+  cardTitleTextElement.textContent = data.title;
   cardTitle.appendChild(cardTitleTextElement);
   var cardSupportingText = document.createElement('div');
   cardSupportingText.className = 'mdl-card__supporting-text';
-  cardSupportingText.textContent = 'In San Francisco';
+  cardSupportingText.textContent = data.location;
   cardSupportingText.style.textAlign = 'center';
   // var cardSaveButton = document.createElement('button');
   // cardSaveButton.textContent = 'Save'
@@ -74,6 +74,19 @@ function createCard() {
   cardWrapper.appendChild(cardSupportingText);
   componentHandler.upgradeElement(cardWrapper);
   sharedMomentsArea.appendChild(cardWrapper);
+}
+
+function clearCards(){
+  while (sharedMomentsArea.hasChildNodes()){
+    sharedMomentsArea.removeChild(sharedMomentsArea.lastChild);
+  }
+}
+
+function updateUI(data){
+  clearCards();
+  for(var i = 0; i < data.length; i++){
+    createCard(data[i]);
+  }
 }
 
 var networkDataReceived = false;
@@ -94,20 +107,21 @@ fetch(url)
   })
   .then(function(data) {
     console.log('From web', data);
-    if(!networkDataReceived){
-      createCard();
+    networkDataReceived = true;
+    var dataArray = [];
+    for(var key  in data){
+      dataArray.push(data[key]);
     }
+    updateUI(dataArray);
   });
 
-if(`caches` in window){
-  caches.match(url)
-      .then((response)=>{
-        if(response){
-          return response.json();
-        }
-      }).then((data)=>{
-    console.log('From cache', data);
-    networkDataReceived = true;
-    createCard();
-  })
+if("indexedDB" in window){
+  console.log('================ Supported IndexDB ==================');
+  readAllData(OBJECT_STORE_NAME).then((data)=>{
+    console.log('================ Received Indexed DB DATA ==================');
+    if(!networkDataReceived){
+      console.log('From cache', data);
+      updateUI(data);
+    }
+  });
 }
